@@ -2,12 +2,32 @@ import random
 import yaml
 import torch
 import numpy as np
+import imgaug.augmenters as iaa
 
 with open('config.yaml', 'r') as f:
     config = yaml.load(f, yaml.FullLoader)
 
 NUM_CLASSES = config['model']['num_classes']
 PIXEL_LIMIT = config['dataset']['pixel_limit']
+
+def multi_prediction(model, img, org_img, single=True):
+    pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
+    pred_softmax = torch.nn.functional.softmax(pred, dim=0)
+    if single:
+        return pred_softmax.cpu()
+    
+    aug_list = [iaa.Sharpen(0.8), iaa.GammaContrast(2), iaa.Fliplr(1)]
+    for aug in aug_list:
+        aug_img = aug.augment_image(org_img)
+        img_tensor = torch.FloatTensor(aug_img/255.0).permute(2, 0, 1)
+        pred_aug = model(img_tensor.unsqueeze(0).cuda()).detach().squeeze()
+        if isinstance(aug, iaa.Fliplr):
+            pred_aug = torch.flip(pred_aug, dims=(-1,))
+        pred_softmax += torch.nn.functional.softmax(pred_aug, dim=0)
+    
+    pred_softmax = (pred_softmax/(len(aug_list)+1))
+    
+    return pred_softmax.cpu()
 
 def multiply_list(lst: list, mul: float, seed=777):
     integer, point = divmod(mul, 1)
