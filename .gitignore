@@ -1,0 +1,16 @@
+# Folder
+TransUNet/
+prediction/
+OLD_TRAINED/
+deeplab_data/
+.ipynb_checkpoints/
+backups/
+dataset/
+
+# Files
+**/*.??g
+*.ipynb
+*.pdf
+*.pyc
+*.pth
+*.txt
