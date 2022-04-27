@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 from itertools import chain
 from torch.utils.data import Dataset
 from image_augmentation import ImgAug
-from utils import multi_prediction
+from utils import multi_prediction, calc_dice, calc_iou
 
 with open('config.yaml', 'r') as f:
     config = yaml.load(f, yaml.FullLoader)
 NUM_CLASSES = config['model']['num_classes']
 PIXEL_LIMIT = config['dataset']['pixel_limit']
 IMG_SIZE = tuple(config['model']['img_size'])
+OVERSAMPLING_VALUES = config['dataset']['oversampling_values']
 
 class DsetBrain(Dataset):
     def __init__(self, mask_list, is_train=False):
