@@ -1,0 +1,6 @@
+model:
+  num_classes: 5
+  img_size: [512, 512]
+  
+dataset:
+  pixel_limit: 80
