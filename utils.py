@@ -3,12 +3,20 @@ import yaml
 import torch
 import numpy as np
 import imgaug.augmenters as iaa
+import cv2
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f, yaml.FullLoader)
-
-NUM_CLASSES = config['model']['num_classes']
-PIXEL_LIMIT = config['dataset']['pixel_limit']
+def pad_to_square(img):
+    if img.shape[0]==img.shape[1]:
+        return img
+    
+    length = max(img.shape)
+    delta_w = length - img.shape[1]
+    delta_h = length - img.shape[0]
+    top, bottom = delta_h//2, delta_h-(delta_h//2)
+    left, right = delta_w//2, delta_w-(delta_w//2)
+    pad_img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0, 255])
+    
+    return pad_img
 
 def multi_prediction(model, img, org_img, single=True):
     pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
@@ -36,12 +44,12 @@ def multiply_list(lst: list, mul: float, seed=777):
     
     return lst
     
-def calc_iou(truth_mask, pred, smooth=1e-5):
+def calc_iou(truth_mask, pred, num_classes, pixel_limit, smooth=1e-5):
     iou_list = dict()
     # IOU
-    for cls_idx in range(1, NUM_CLASSES):
+    for cls_idx in range(1, num_classes):
         iou_list.setdefault(cls_idx, -1)
-        if torch.sum(truth_mask==cls_idx)>PIXEL_LIMIT:
+        if torch.sum(truth_mask==cls_idx)>pixel_limit:
             cls_and = (torch.sum(torch.logical_and(truth_mask==cls_idx, pred[cls_idx]))).item()
             cls_or = (torch.sum(torch.logical_or(truth_mask==cls_idx, pred[cls_idx]))).item()
             iou = (cls_and+smooth) / (cls_or+smooth)
@@ -50,12 +58,12 @@ def calc_iou(truth_mask, pred, smooth=1e-5):
     
     return iou_list, np.mean(iou_values).item() if iou_values else -1
 
-def calc_dice(truth_mask, pred, smooth=1e-5):
+def calc_dice(truth_mask, pred, num_classes, pixel_limit, smooth=1e-5):
     dice_list = dict()
     # DICE
-    for cls_idx in range(1, NUM_CLASSES):
+    for cls_idx in range(1, num_classes):
         dice_list.setdefault(cls_idx, -1)
-        if torch.sum(truth_mask==cls_idx)>PIXEL_LIMIT:
+        if torch.sum(truth_mask==cls_idx)>pixel_limit:
             cls_truth_mask = truth_mask==cls_idx
             cls_and = (torch.sum(torch.logical_and(cls_truth_mask, pred[cls_idx]))).item()
             cls_x_y = torch.sum(cls_truth_mask).item() + torch.sum(pred[cls_idx]).item()

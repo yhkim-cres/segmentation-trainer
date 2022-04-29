@@ -1,10 +1,10 @@
 import yaml
-import tqdm
 import cv2
 import numpy as np
 import random
 import torch
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from itertools import chain
 from torch.utils.data import Dataset
 from image_augmentation import ImgAug
@@ -143,9 +143,7 @@ class DsetBrain(Dataset):
             img, truth_mask, org_img = self[idx]
             pred_softmax = multi_prediction(model, img, org_img, single=single) >= threshold
             
-            # pred = model(img.unsqueeze(0).cuda()).detach().squeeze().cpu()
-            # pred = (torch.nn.functional.softmax(pred, dim=0) >= threshold)
-            score_list, score_mean = metric_function(truth_mask, pred_softmax)
+            score_list, score_mean = metric_function(truth_mask, pred_softmax, NUM_CLASSES, PIXEL_LIMIT)
             for key in score_list:
                 if score_list[key]!=-1: class_score_dict[key].append(score_list[key])
             if score_mean!=-1: class_score_dict['mean'].append(score_mean)
