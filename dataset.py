@@ -69,12 +69,12 @@ class DsetBrain(Dataset):
         # Read Image
         img = cv2.imread(self.img_list[idx], 1)
         if img.shape[:2]!=IMG_SIZE:
-            img = cv2.resize(img, dsize=IMG_SIZE, interpolation=cv2.INTER_CUBIC)
+            img = cv2.resize(img, dsize=IMG_SIZE, interpolation=cv2.INTER_NEAREST)
         
         # Read Mask
         mask = cv2.imread(self.mask_list[idx], 0)
         if mask.shape[:2]!=IMG_SIZE:
-            mask = cv2.resize(mask, dsize=IMG_SIZE, interpolation=cv2.INTER_CUBIC)
+            mask = cv2.resize(mask, dsize=IMG_SIZE, interpolation=cv2.INTER_NEAREST)
         
         # Create label mask
         label_mask = np.zeros(mask.shape, dtype=np.uint8)
