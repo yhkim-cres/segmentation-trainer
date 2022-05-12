@@ -23,6 +23,7 @@ class DsetBrain(Dataset):
         self.img_aug = ImgAug()  # image augmentation instance
         self.is_train = is_train  # if is_train : augmentation & oversampling
         self.class_idx_list = {}  # idx_list for each classes
+
         self.class_list = class_list
         self.img_shape = img_shape
         self.pixel_limit = pixel_limit
@@ -53,7 +54,7 @@ class DsetBrain(Dataset):
         self.train_idx_list = []  # oversampled idx list
         self.roll()
         
-    def roll(self):
+    def roll(self):  # roll background index
         self.train_idx_list = []  # oversampled idx list
         not_bg_list = list(chain(*[values for key, values in self.class_idx_list.items() if key!=0]))
         self.train_idx_list += not_bg_list
@@ -80,7 +81,8 @@ class DsetBrain(Dataset):
         for cls_idx in self.class_list:
             if idx in self.class_idx_list[cls_idx]:
                 label_mask[mask==cls_idx] = cls_idx
-                
+
+        # Apply Augmentation
         if self.is_train:
             img, label_mask = self.img_aug.apply_aug(img, label_mask)
 
@@ -155,6 +157,7 @@ class DsetBrain(Dataset):
         
         return class_score_dict
     
+    # 수정필요
     def calc_dataset_performance(self, model, threshold=0.5):
         retrain_flag = False
         if self.is_train:

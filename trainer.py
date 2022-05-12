@@ -15,12 +15,13 @@ from utils import DiceLoss, plot_losses, plot_dataset_prediction
 from datetime import datetime
 class SegmentationTrainer:
     def __init__(self, model_name, optimizer_name, scheduler_name, config, **kwargs):
-        # init variables
+        # Init variables
         self.config = config
         self.model_name = model_name
         self.optimizer_name = optimizer_name
         self.scheduler_name = scheduler_name
 
+        # Start logging
         self.init_logging(self.config['trainer']['log_path'])
 
         # Load model
@@ -127,7 +128,6 @@ class SegmentationTrainer:
         return np.mean(loss_list).item()
 
     def dataset_sample_prediction(self, log_path, train_sample_idx, valid_sample_idx):
-        # sample test
         train_path = join(log_path, f'plot_train_{train_sample_idx}_{self.iter_num:04}.jpg')
         valid_path = join(log_path, f'plot_valid_{valid_sample_idx}_{self.iter_num:04}.jpg')
         plot_dataset_prediction(self.model, self.trainset, train_sample_idx, dtype='Trainset',
@@ -155,7 +155,7 @@ class SegmentationTrainer:
         valid_sample_idx = trainer_config['valid_sample_idx']
         threshold = self.config['general']['threshold']
 
-        # train variables
+        # set train variables
         start_time = time.time()
         time_per_epoch_list = []
         loss_list = []
