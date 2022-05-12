@@ -79,10 +79,10 @@ class SegmentationTrainer:
     def load_optimizer(self):
         optim_name = self.optimizer_name
         if optim_name == 'SGD':
-            return torch.optim.SGD(self.model.parameters(), lr=float(self.config['trainer']['base_lr']),
+            return torch.optim.SGD(self.model.parameters(), lr=self.config['trainer']['base_lr'],
                                 **self.config['trainer']['optimizer'][optim_name])
         elif optim_name == 'AdamW':
-            return torch.optim.AdamW(self.model.parameters(), lr=float(self.config['trainer']['base_lr']),
+            return torch.optim.AdamW(self.model.parameters(), lr=self.config['trainer']['base_lr'],
                                 **self.config['trainer']['optimizer'][optim_name])
         else:
             raise Exception(f"{optim_name} does not exists!")
