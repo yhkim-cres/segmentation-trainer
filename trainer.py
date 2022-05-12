@@ -29,9 +29,10 @@ class SegmentationTrainer:
         self.model_name = model_name
         self.optimizer_name = optimizer_name
         self.scheduler_name = scheduler_name
+        self.iter_num = 0
 
         # Load model
-        self.model = load_models(config['model'][self.model_name], **config['general'])
+        self.model = load_models(config['model'][self.model_name], **config['general']).cuda()
         
         # Load Dataset
         self.train_mask_list = glob(join(config['dataset']['trainset_path'], '**/img_mask/*.??g'), recursive=True)
@@ -99,4 +100,33 @@ class SegmentationTrainer:
 
         return loss.item()
 
+    def validation_step(self):
+        loss_list = []
+        with torch.no_grad():
+            self.model.eval()
+            for i, (image_batch, label_batch, _) in enumerate(self.valid_loader, 1):
+                print(f'\rValidation: {i}/{len(self.valid_loader)}', end=' ')
+                image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
+                outputs = self.model(image_batch)
+                loss_ce = self.ce_loss(outputs, label_batch[:].long())
+                loss_dice = self.dice_loss(outputs, label_batch, softmax=True)
+                loss = 0.5 * loss_ce + 0.5 * loss_dice
+                loss_list.append(loss.item())
+                
+        return np.mean(loss_list).item()
+
+    def train(self):
+        trainer_config = self.config['trainer']
+        target_iteration = trainer_config['target_iteration']
+        min_chkpoint_iteration = trainer_config['min_chkpoint_iteration']
+        per_log_iter = trainer_config['per_log_iter']
+        train_sample_idx = trainer_config['train_sample_idx']
+        valid_sample_idx = trainer_config['valid_sample_idx']
+
+        for i, (image_batch, label_batch, _) in enumerate(self.train_loader, 1):
+            image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
+            loss = self.train_step(image_batch, label_batch)
+            print(loss)
+
 trainer = SegmentationTrainer('TransUnet', 'SGD', 'CosineAnnealingWarmRestarts', config)
+trainer.train()
