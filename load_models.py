@@ -2,10 +2,12 @@ import numpy as np
 from TransUNet.networks.vit_seg_modeling import VisionTransformer as ViT_seg
 from TransUNet.networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 
-def load_models(model_name, **kwargs):
+def load_models(model_config, **kwargs):
     model = None
-    if model_name=='TransUnet':
-        model = load_TransUnet(model_name=model_name, **kwargs)
+    if model_config['model_name']=='TransUnet':
+        model = load_TransUnet(**model_config, **kwargs)
+    else:
+        raise Exception(f"{model_config['model_name']} does not exists!")
 
     return model
     

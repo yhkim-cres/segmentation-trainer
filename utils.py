@@ -7,12 +7,50 @@ import imgviz
 import matplotlib.pyplot as plt
 from typing import Union
 from torch.utils.data import Dataset
+from torch import nn
 
 FONT_SIZE = 20
 SHRINK = 0.6
 
-# softmax
-def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_size, class_list, label_names, dtype: str='',
+class DiceLoss(nn.Module):
+    def __init__(self, n_classes):
+        super(DiceLoss, self).__init__()
+        self.n_classes = n_classes
+
+    def _one_hot_encoder(self, input_tensor):
+        tensor_list = []
+        for i in range(self.n_classes):
+            temp_prob = input_tensor == i  # * torch.ones_like(input_tensor)
+            tensor_list.append(temp_prob.unsqueeze(1))
+        output_tensor = torch.cat(tensor_list, dim=1)
+        return output_tensor.float()
+
+    def _dice_loss(self, score, target):
+        target = target.float()
+        smooth = 1e-5
+        intersect = torch.sum(score * target)
+        y_sum = torch.sum(target * target)
+        z_sum = torch.sum(score * score)
+        loss = (2 * intersect + smooth) / (z_sum + y_sum + smooth)
+        loss = 1 - loss
+        return loss
+
+    def forward(self, inputs, target, weight=None, softmax=False):
+        if softmax:
+            inputs = torch.softmax(inputs, dim=1)
+        target = self._one_hot_encoder(target)
+        if weight is None:
+            weight = [1] * self.n_classes
+        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
+        class_wise_dice = []
+        loss = 0.0
+        for i in range(0, self.n_classes):
+            dice = self._dice_loss(inputs[:, i], target[:, i])
+            class_wise_dice.append(1.0 - dice.item())
+            loss += dice * weight[i]
+        return loss / self.n_classes
+
+def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shape, class_list, label_names, dtype: str='',
                             show=False, save_path: str=None, single=True, threshold=0.5, **kwargs):
     retrain_flag = False
     is_dataset = False
@@ -25,9 +63,9 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_size
         img, truth_mask, org_img = data[idx]
     else:
         org_img = pad_to_square(cv2.imread(data, cv2.IMREAD_COLOR))
-        if org_img.shape[:2]!=img_size: org_img = cv2.resize(org_img, dsize=img_size, interpolation=cv2.INTER_CUBIC)
+        if org_img.shape[:2]!=img_shape: org_img = cv2.resize(org_img, dsize=img_shape, interpolation=cv2.INTER_CUBIC)
         img = torch.FloatTensor(org_img/255.0).permute(2, 0, 1)
-        truth_mask = np.zeros(img_size)
+        truth_mask = np.zeros(img_shape)
     
     model.eval()
     pred_softmax = multi_prediction(model, img, org_img, single=single)
@@ -37,7 +75,7 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_size
     values, pred_mask = torch.max(pred_softmax, dim=0)
     pred_mask[values<threshold] = 0
     pred_mask = pred_mask.numpy().astype(np.uint8)
-    num_classes = len(class_list+1)
+    num_classes = len(class_list)+1
     vmax = num_classes-1
 
     cols = 3
@@ -94,6 +132,19 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_size
     
     if retrain_flag:
         data.is_train=True
+
+def plot_losses(train_loss_list, valid_loss_list, show=False, save_path=None):
+    plt.figure(figsize=(15, 6))
+    plt.title('Train & Valid loss plot')
+    plt.xlabel('iter_num')
+    plt.ylabel('losses(log10)')
+    plt.plot(list(train_loss_list.keys()), np.log10(list(train_loss_list.values())), label='Train_loss')
+    plt.plot(list(valid_loss_list.keys()), np.log10(list(valid_loss_list.values())), label='Valid_loss')
+    plt.legend()
+    if save_path: plt.savefig(save_path, dpi=80)
+    
+    if show: plt.show()
+    else: plt.close()
 
 def pad_to_square(img):
     if img.shape[0]==img.shape[1]:
