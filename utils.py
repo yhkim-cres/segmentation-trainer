@@ -15,7 +15,7 @@ FONT_SIZE = 20
 SHRINK = 0.6
 
 class ExpTargetIterScheduler(_LRScheduler):
-    def __init__(self, optimizer, target_iteration, gamma, last_epoch=-1, verbose=False):
+    def __init__(self, optimizer, gamma, target_iteration, last_epoch=-1, verbose=False):
         self.gamma = gamma
         self.target_iteration = target_iteration
         super(ExpTargetIterScheduler, self).__init__(optimizer, last_epoch, verbose)
@@ -27,7 +27,7 @@ class ExpTargetIterScheduler(_LRScheduler):
 
         if self.last_epoch == 0:
             return self.base_lrs
-        return [group['initial_lr'] * (1.0-self._step_count/self.target_iteration)**self.gamma
+        return [group['initial_lr'] * max((1.0-self._step_count/self.target_iteration), 0)**self.gamma
                 for group in self.optimizer.param_groups]
 class DiceLoss(nn.Module):
     def __init__(self, n_classes):
