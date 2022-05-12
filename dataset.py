@@ -115,7 +115,7 @@ class DsetBrain(Dataset):
         ax2 = fig.add_subplot(rows, cols, 2)
         ax2.set_title(f'{idx}-truth')
         tm_plot = ax2.imshow(truth_mask, vmin=0, vmax=len(self.class_list))
-        plt.colorbar(tm_plot, shrink=0.7)
+        plt.colorbar(tm_plot, shrink=0.6)
         
         if save_path: fig.savefig(save_path, dpi=100)
         if show: plt.show()
