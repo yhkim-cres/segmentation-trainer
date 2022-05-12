@@ -1,10 +1,5 @@
 import yaml
 import os
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f, yaml.FullLoader)
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]= config['general']['cuda_device']
-
 import time
 import torch
 import numpy as np
@@ -18,9 +13,6 @@ from dataset import DsetBrain
 from torch.nn.modules.loss import CrossEntropyLoss
 from utils import DiceLoss, plot_losses, plot_dataset_prediction
 from datetime import datetime
-
-
-
 class SegmentationTrainer:
     def __init__(self, model_name, optimizer_name, scheduler_name, config, **kwargs):
         # init variables
@@ -101,6 +93,7 @@ class SegmentationTrainer:
                               **self.config['trainer']['scheduler'][scheduler_name])
 
     def train_step(self, image_batch, label_batch):
+        ce_value, dice_value = self.config['trainer']['loss_value']['ce_loss'], self.config['trainer']['loss_value']['dice_loss']
         self.model.train()
         # model input
         image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
@@ -109,7 +102,7 @@ class SegmentationTrainer:
         # get loss
         loss_ce = self.ce_loss(outputs, label_batch[:].long())
         loss_dice = self.dice_loss(outputs, label_batch, softmax=True)
-        loss = 0.5 * loss_ce + 0.5 * loss_dice
+        loss = ce_value*loss_ce + dice_value*loss_dice
 
         # backward
         self.optimizer.zero_grad()
@@ -224,5 +217,10 @@ class SegmentationTrainer:
                         logging.info('Iter: {}/{}, Tloss: {:.6f}, Vloss: {:.6f}, Tdice: {}, Vdice: {}, Lr: {:.10f}, remain: {}'.format(
                         self.iter_num, target_iteration, train_loss, valid_loss, str_train_score, str_valid_score , lr_, remaining_time))
 
-trainer = SegmentationTrainer('TransUnet', 'SGD', 'CosineAnnealingWarmRestarts', config)
-trainer.train()
+if __name__ == '__main__':
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f, yaml.FullLoader)
+    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"]= config['general']['cuda_device']
+    trainer = SegmentationTrainer('TransUnet', 'SGD', 'CosineAnnealingWarmRestarts', config)
+    trainer.train()
