@@ -5,13 +5,30 @@ import imgaug.augmenters as iaa
 import cv2
 import imgviz
 import matplotlib.pyplot as plt
+import warnings
 from typing import Union
 from torch.utils.data import Dataset
 from torch import nn
+from torch.optim.lr_scheduler import _LRScheduler
 
 FONT_SIZE = 20
 SHRINK = 0.6
 
+class ExpTargetIterScheduler(_LRScheduler):
+    def __init__(self, optimizer, target_iteration, gamma, last_epoch=-1, verbose=False):
+        self.gamma = gamma
+        self.target_iteration = target_iteration
+        super(ExpTargetIterScheduler, self).__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        if not self._get_lr_called_within_step:
+            warnings.warn("To get the last learning rate computed by the scheduler, "
+                          "please use `get_last_lr()`.", UserWarning)
+
+        if self.last_epoch == 0:
+            return self.base_lrs
+        return [group['initial_lr'] * (1.0-self._step_count/self.target_iteration)**self.gamma
+                for group in self.optimizer.param_groups]
 class DiceLoss(nn.Module):
     def __init__(self, n_classes):
         super(DiceLoss, self).__init__()
