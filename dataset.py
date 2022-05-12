@@ -9,16 +9,9 @@ from itertools import chain
 from torch.utils.data import Dataset
 from image_augmentation import ImgAug
 from utils import multi_prediction, calc_dice, calc_iou
-
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f, yaml.FullLoader)
-NUM_CLASSES = config['model']['num_classes']
-PIXEL_LIMIT = config['dataset']['pixel_limit']
-IMG_SIZE = tuple(config['model']['img_size'])
-OVERSAMPLING_VALUES = config['dataset']['oversampling_values']
-
 class DsetBrain(Dataset):
-    def __init__(self, mask_list, is_train=False):
+    def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, bg_train_ratio, 
+                is_train=False, **kwargs):
         """
         0 : Background
         1 : ICH
@@ -31,16 +24,23 @@ class DsetBrain(Dataset):
         self.img_aug = ImgAug()  # image augmentation instance
         self.is_train = is_train  # if is_train : augmentation & oversampling
         self.class_idx_list = {}  # idx_list for each classes
+        self.class_list = class_list
+        self.img_shape = img_shape
+        self.pixel_limit = pixel_limit
+        self.bg_train_ratio = bg_train_ratio
+        self.oversampling_values = oversampling_values
         
-        for cls_idx in range(NUM_CLASSES):
+        self.class_idx_list.setdefault(0, [])
+        for cls_idx in self.class_list:
             self.class_idx_list.setdefault(cls_idx, [])
+
         # sort classes according to PIXEL LIMIT
         for i in tqdm(range(len(self.mask_list)), desc='Sorting claases'):
             mask = cv2.imread(self.mask_list[i], 0)
             is_bg = True
-            for cls_idx in range(1, NUM_CLASSES):
+            for cls_idx in self.class_list:
                 pixel_num = np.sum(mask==cls_idx).item()
-                if pixel_num>PIXEL_LIMIT:
+                if pixel_num>self.pixel_limit:
                     self.class_idx_list[cls_idx].append(i)
                     is_bg = False
             if is_bg:
@@ -49,8 +49,8 @@ class DsetBrain(Dataset):
         self.org_idx_list = [i for i in range(len(self.mask_list))]  # original idx list
         
         if self.is_train:
-            for key in OVERSAMPLING_VALUES:
-                self.class_idx_list[key] = self.class_idx_list[key]*OVERSAMPLING_VALUES[key]
+            for key in self.oversampling_values:
+                self.class_idx_list[key] = self.class_idx_list[key]*self.oversampling_values[key]
         self.train_idx_list = []  # oversampled idx list
         self.roll()
         
@@ -58,7 +58,7 @@ class DsetBrain(Dataset):
         self.train_idx_list = []  # oversampled idx list
         not_bg_list = list(chain(*[values for key, values in self.class_idx_list.items() if key!=0]))
         self.train_idx_list += not_bg_list
-        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), len(self.class_idx_list[0]))//2)
+        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.bg_train_ratio)))
 
     def __len__(self):
         return len(self.train_idx_list) if self.is_train else len(self.org_idx_list)
@@ -68,17 +68,17 @@ class DsetBrain(Dataset):
         
         # Read Image
         img = cv2.imread(self.img_list[idx], 1)
-        if img.shape[:2]!=IMG_SIZE:
-            img = cv2.resize(img, dsize=IMG_SIZE, interpolation=cv2.INTER_NEAREST)
+        if img.shape[:2]!=self.img_shape:
+            img = cv2.resize(img, dsize=self.img_shape, interpolation=cv2.INTER_NEAREST)
         
         # Read Mask
         mask = cv2.imread(self.mask_list[idx], 0)
-        if mask.shape[:2]!=IMG_SIZE:
-            mask = cv2.resize(mask, dsize=IMG_SIZE, interpolation=cv2.INTER_NEAREST)
+        if mask.shape[:2]!=self.img_shape:
+            mask = cv2.resize(mask, dsize=self.img_shape, interpolation=cv2.INTER_NEAREST)
         
         # Create label mask
         label_mask = np.zeros(mask.shape, dtype=np.uint8)
-        for cls_idx in range(1, NUM_CLASSES):
+        for cls_idx in self.class_list:
             if idx in self.class_idx_list[cls_idx]:
                 label_mask[mask==cls_idx] = cls_idx
                 
@@ -115,7 +115,7 @@ class DsetBrain(Dataset):
 
         ax2 = fig.add_subplot(rows, cols, 2)
         ax2.set_title(f'{idx}-truth')
-        tm_plot = ax2.imshow(truth_mask, vmin=0, vmax=NUM_CLASSES-1)
+        tm_plot = ax2.imshow(truth_mask, vmin=0, vmax=len(self.class_list))
         plt.colorbar(tm_plot, shrink=0.7)
         
         if save_path: fig.savefig(save_path, dpi=100)
@@ -135,7 +135,7 @@ class DsetBrain(Dataset):
         model.eval()
         class_score_dict = dict()
         class_score_dict['mean'] = []
-        for cls_idx in range(1, NUM_CLASSES):
+        for cls_idx in self.class_list:
             class_score_dict.setdefault(cls_idx, [])
         
         idx_list = set(chain(*[self.class_idx_list[key] for key in self.class_idx_list if key!=0]))
@@ -143,7 +143,7 @@ class DsetBrain(Dataset):
             img, truth_mask, org_img = self[idx]
             pred_softmax = multi_prediction(model, img, org_img, single=single) >= threshold
             
-            score_list, score_mean = metric_function(truth_mask, pred_softmax, NUM_CLASSES, PIXEL_LIMIT)
+            score_list, score_mean = metric_function(truth_mask, pred_softmax, self.class_list, self.pixel_limit)
             for key in score_list:
                 if score_list[key]!=-1: class_score_dict[key].append(score_list[key])
             if score_mean!=-1: class_score_dict['mean'].append(score_mean)
@@ -173,10 +173,10 @@ class DsetBrain(Dataset):
             pred = torch.nn.functional.softmax(pred, dim=0) >= threshold
             
             truth_cls, pred_cls = [], []
-            for cls_num in range(1, NUM_CLASSES):
-                if torch.sum(truth_mask==cls_num) > PIXEL_LIMIT:
+            for cls_num in self.class_list:
+                if torch.sum(truth_mask==cls_num) > self.pixel_limit:
                     truth_cls.append(cls_num)
-                if torch.sum(pred[cls_num]) > PIXEL_LIMIT:
+                if torch.sum(pred[cls_num]) > self.pixel_limit:
                     pred_cls.append(cls_num)
             if not truth_cls:
                 truth_cls.append(0)
@@ -186,7 +186,7 @@ class DsetBrain(Dataset):
             pred_idx_list[idx].append(pred_cls)
         
         scores = {}
-        for cls_num in range(NUM_CLASSES):
+        for cls_num in [0]+self.class_list:
             scores.setdefault(cls_num, [])
             tp, fp, fn, tn = 0, 0, 0, 0
             for key in pred_idx_list:
