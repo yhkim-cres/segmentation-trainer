@@ -1,12 +1,11 @@
 # Folder
-TransUNet/
-UTNetV2/
 prediction/
 OLD_TRAINED/
 deeplab_data/
 .ipynb_checkpoints/
 backups/
 dataset/
+train_results/
 
 # Files
 **/*.??g
@@ -14,7 +13,7 @@ dataset/
 *.pdf
 *.pyc
 *.pth
-*.txt
+*.npz
 config2.yaml
 run_trainer2.py
 test2.py
