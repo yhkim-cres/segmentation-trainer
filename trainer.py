@@ -138,12 +138,14 @@ class SegmentationTrainer:
         plot_dataset_prediction(self.model, self.validset, valid_sample_idx, dtype='Validset',
                             show=False, save_path=valid_path, **self.config['general'])
 
-    def dataset_calc_metric(self, threshold, metric='dice'):
-        train_score = self.trainset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
-        str_train_score = str({key: round(train_score[key], 2) for key in train_score})
-        #str_train_score = "{'mean': -1, 1: -1, 2: -1, 3: -1, 4: -1}"
+    def dataset_calc_metric(self, threshold, calc_trainset_metric=True, metric='dice'):
+        str_train_score = None
+        if calc_trainset_metric:
+            train_score = self.trainset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
+            str_train_score = str({key: round(train_score[key], 2) for key in train_score})
         valid_score = self.validset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
         str_valid_score = str({key: round(valid_score[key], 2) for key in valid_score})
+        if not str_train_score: str_train_score = str({key: -1 for key in valid_score})
 
         return str_train_score, str_valid_score
 
@@ -156,6 +158,7 @@ class SegmentationTrainer:
         per_log_iter = trainer_config['per_log_iter']
         train_sample_idx = trainer_config['train_sample_idx']
         valid_sample_idx = trainer_config['valid_sample_idx']
+        calc_trainset_metric = trainer_config['calc_trainset_metric']
         threshold = self.config['general']['threshold']
 
         # set train variables
@@ -207,7 +210,8 @@ class SegmentationTrainer:
                             plot_losses(self.train_loss_list, self.valid_loss_list, show=False, save_path=plot_path)
 
                         # calculate iou
-                        str_train_score, str_valid_score = self.dataset_calc_metric(threshold=threshold, metric='dice')
+                        str_train_score, str_valid_score = self.dataset_calc_metric(threshold=threshold,
+                                            calc_trainset_metric=calc_trainset_metric, metric='dice')
 
                         # calculate remaining time
                         cost_time_per_iter = (time.time() - start_time) / per_log_iter
