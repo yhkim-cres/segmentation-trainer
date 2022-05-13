@@ -39,7 +39,7 @@ dataset:
   oversampling_values: {2: 1}  # 오버샘플링시 사용
 
 trainer:
-  log_path: train_results/UTNet01  # 로그 저장 경로
+  log_path: train_results/dset4_transunet_01  # 로그 저장 경로
   base_lr: 5.0e-3
   target_iteration: 15000
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
@@ -50,7 +50,7 @@ trainer:
   train_sample_idx: 710  # prediction 샘플 번호
   valid_sample_idx: 38
 
-  calc_trainset_metric: False
+  calc_trainset_metric: False  # trainset metric 계산옵션(trainset은 데이터양때문에 시간소모가 큼)
 
   optimizer:
     SGD:
