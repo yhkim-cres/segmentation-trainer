@@ -52,9 +52,9 @@ class SegmentationTrainer:
         self.valid_loss_list = {}
         
     def __str__(self):
-        pytorch_total_params = sum(p.numel() for p in self.model.parameters())
+        #pytorch_total_params = sum(p.numel() for p in self.model.parameters())
         string = f"model: {self.model_name}, optimizer: {self.optimizer_name}, scheduler: {self.scheduler_name}"
-        string += f'\nTotal Parameters of {self.model_name} : {pytorch_total_params:,}'
+        #string += f'\nTotal Parameters of {self.model_name} : {pytorch_total_params:,}'
         return string+'\n'+pformat(self.config)
 
     def init_logging(self, log_path):
