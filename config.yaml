@@ -73,6 +73,7 @@ trainer:
       step_size: 500
       gamma: 0.9
       last_epoch: -1
+    NoneScheduler: {}  # do nothing
 
   loss_value:  # 현재 0.5*ce_loss + 0.5*dice_loss 사용중(TransUnet default values)
     ce_loss: 0.5

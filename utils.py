@@ -30,6 +30,18 @@ class ExpTargetIterScheduler(_LRScheduler):
             return self.base_lrs
         return [max(group['initial_lr'] * max((1.0-self._step_count/self.target_iteration), 0)**self.gamma, self.min_lr)
                 for group in self.optimizer.param_groups]
+class NoneScheduler(_LRScheduler):  # do nothing scheduler
+    def __init__(self, optimizer, last_epoch=-1, verbose=False):
+        super(NoneScheduler, self).__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        if not self._get_lr_called_within_step:
+            warnings.warn("To get the last learning rate computed by the scheduler, "
+                          "please use `get_last_lr()`.", UserWarning)
+
+        if self.last_epoch == 0:
+            return self.base_lrs
+        return [group['lr'] for group in self.optimizer.param_groups]
 class DiceLoss(nn.Module):
     def __init__(self, n_classes):
         super(DiceLoss, self).__init__()

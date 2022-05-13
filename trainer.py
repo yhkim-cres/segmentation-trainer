@@ -11,7 +11,7 @@ from pprint import pformat
 from os.path import join
 from dataset import DsetBrain
 from torch.nn.modules.loss import CrossEntropyLoss
-from utils import DiceLoss, plot_losses, plot_dataset_prediction, ExpTargetIterScheduler
+from utils import DiceLoss, plot_losses, plot_dataset_prediction, ExpTargetIterScheduler, NoneScheduler
 from datetime import datetime
 class SegmentationTrainer:
     def __init__(self, model_name, optimizer_name, scheduler_name, config, test_mode=False, **kwargs):
@@ -101,6 +101,8 @@ class SegmentationTrainer:
         elif scheduler_name == 'StepLR':
             return torch.optim.lr_scheduler.StepLR(optimizer,
                               **self.config['trainer']['scheduler'][scheduler_name])
+        elif scheduler_name == 'NoneScheduler':
+            return NoneScheduler(optimizer, **self.config['trainer']['scheduler'][scheduler_name])
 
     def train_step(self, image_batch, label_batch):
         ce_value, dice_value = self.config['trainer']['loss_value']['ce_loss'], self.config['trainer']['loss_value']['dice_loss']
