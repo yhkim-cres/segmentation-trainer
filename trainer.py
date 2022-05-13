@@ -59,7 +59,7 @@ class SegmentationTrainer:
         if os.path.exists(log_path):
             raise Exception('Folder already exists!')
         else:
-            os.mkdir(log_path)
+            os.makedirs(log_path, exist_ok=False)
             
         logging.basicConfig(filename=f"{log_path}/train_log_{str(datetime.now()).replace(' ', '_')}.txt", level=logging.INFO,
                             format='[%(asctime)s.%(msecs)03d] %(message)s', datefmt='%H:%M:%S')

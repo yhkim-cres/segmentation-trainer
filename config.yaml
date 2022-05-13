@@ -25,7 +25,7 @@ dataset:
   oversampling_values: [1: 1, 2: 1]  # 오버샘플링시 사용
 
 trainer:
-  log_path: test_1  # 로그 저장 경로
+  log_path: train_results/test_1  # 로그 저장 경로
   base_lr: 5.0e-3
   target_iteration: 20000
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
