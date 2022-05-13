@@ -28,4 +28,10 @@ jupyter lab
 2. ```run_trainer.py``` 실행
 ```
 python run_trainer.py --config config.yaml --model TransUnet --optimizer SGD --scheduler CosineAnnealingWarmRestarts
-``` 
+```
+
+## 현재 사용가능 모델
+- [TransUnet](https://github.com/Beckschen/TransUNet)<br>
+[Pretrained Weights](https://console.cloud.google.com/storage/vit_models/) : imagenet21k+imagenet2012/R50+ViT-B_16.npz 파일 다운로드
+- [UTNetV2](https://github.com/yhygao/CBIM-Medical-Image-Segmentation)<br>
+Pretrained Weights : 존재X, 학습필요
