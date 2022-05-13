@@ -27,8 +27,6 @@ def load_TransUnet(model_name, vit_name, vit_patches_size, n_skip, pretrained_we
     model = ViT_seg(config_vit, img_size=img_size, num_classes=config_vit.n_classes)
     if pretrained_weights:
         model.load_from(weights=np.load(pretrained_weights))
-    pytorch_total_params = sum(p.numel() for p in model.parameters())
-    print(f'Loaded {model_name}, Total Parameters : {pytorch_total_params:,}')
 
     return model
 
@@ -36,9 +34,7 @@ def load_TransUnet(model_name, vit_name, vit_patches_size, n_skip, pretrained_we
 def load_UTNetV2(model_name, class_list, pretrained_weights, in_chan, **kwargs):
     from UTNetV2.utnetv2 import UTNetV2
     model = UTNetV2(in_chan, len(class_list)+1, **kwargs)
-    pytorch_total_params = sum(p.numel() for p in model.parameters())
     if pretrained_weights:
         model.load_state_dict(load(pretrained_weights))
-    print(f'Loaded {model_name}, Total Parameters : {pytorch_total_params:,}')
 
     return model
