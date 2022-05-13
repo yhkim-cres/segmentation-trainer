@@ -16,7 +16,7 @@ model:
   UTNetV2:
     model_name: UTNetV2
     pretrained_weights: 
-    in_chan: 1
+    in_chan: 3
     base_chan: 32
     conv_block: 'BasicBlock'
     conv_num: [2,1,0,0,  0,1,2,2]
@@ -32,22 +32,22 @@ model:
     proj_drop: 0.
 
 dataset:
-  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220511/trainset
-  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220511/validset
+  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/trainset
+  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/validset
   pixel_limit: 80
   bg_train_ratio: 0.5  # 학습시 non_CH 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
   oversampling_values: {2: 1}  # 오버샘플링시 사용
 
 trainer:
-  log_path: test1/test_2  # 로그 저장 경로
-  base_lr: 5.0e-3
-  target_iteration: 20000
+  log_path: train_results/UTNet01  # 로그 저장 경로
+  base_lr: 5.0e-4
+  target_iteration: 15000
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
-  per_log_iter: 150  # 해당 iteration마다 로그저장
+  per_log_iter: 200  # 해당 iteration마다 로그저장
   train_batch_size: 6
   valid_batch_size: 12
-  train_sample_idx: 610  # prediction 샘플 번호
-  valid_sample_idx: 72  
+  train_sample_idx: 710  # prediction 샘플 번호
+  valid_sample_idx: 38
 
   optimizer:
     SGD:
