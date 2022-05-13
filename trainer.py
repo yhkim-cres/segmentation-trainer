@@ -14,15 +14,17 @@ from torch.nn.modules.loss import CrossEntropyLoss
 from utils import DiceLoss, plot_losses, plot_dataset_prediction
 from datetime import datetime
 class SegmentationTrainer:
-    def __init__(self, model_name, optimizer_name, scheduler_name, config, **kwargs):
+    def __init__(self, model_name, optimizer_name, scheduler_name, config, test_mode=False, **kwargs):
         # Init variables
         self.config = config
         self.model_name = model_name
         self.optimizer_name = optimizer_name
         self.scheduler_name = scheduler_name
+        self.test_mode = test_mode
 
-        # Start logging
-        self.init_logging(self.config['trainer']['log_path'])
+        if not self.test_mode:
+            # Start logging
+            self.init_logging(self.config['trainer']['log_path'])
 
         # Load model
         self.model = load_models(config['model'][self.model_name], **config['general']).cuda()
@@ -30,7 +32,8 @@ class SegmentationTrainer:
         # Load Dataset
         self.train_mask_list = sorted(glob(join(config['dataset']['trainset_path'], '**/img_mask/*.??g'), recursive=True))
         self.valid_mask_list = sorted(glob(join(config['dataset']['validset_path'], '**/img_mask/*.??g'), recursive=True))
-        self.trainset = DsetBrain(self.train_mask_list, is_train=True, **config['dataset'], **config['general'])
+        is_train = True if not self.test_mode else False
+        self.trainset = DsetBrain(self.train_mask_list, is_train=is_train, **config['dataset'], **config['general'])
         self.validset = DsetBrain(self.valid_mask_list, is_train=False, **config['dataset'], **config['general'])
 
         # Load dataloader

@@ -8,11 +8,14 @@ general:
 
 model:
   TransUnet:
-    model_name: 'TransUnet'
+    model_name: TransUnet
     vit_name: R50-ViT-B_16
     vit_patches_size: 16
     n_skip: 3
     pretrained_weights: TransUNet/vit_models/imagenet21k+imagenet2012_R50+ViT-B_16.npz
+  UTNetV2:
+    model_name: UTNetV2
+    pretrained_weights: 
 
 dataset:
   trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220511/trainset
@@ -36,7 +39,8 @@ trainer:
     SGD:
       momentum: 0.9
       weight_decay: 0.0001
-    AdamW: {}
+    AdamW:
+      weight_decay: 0.01
 
   scheduler:
     CosineAnnealingWarmRestarts:
@@ -52,7 +56,7 @@ trainer:
       step_size: 500
       gamma: 0.9
       last_epoch: -1
-      
+
   loss_value:  # 현재 0.5*ce_loss + 0.5*dice_loss 사용중(TransUnet default values)
     ce_loss: 0.5
     dice_loss: 0.5
