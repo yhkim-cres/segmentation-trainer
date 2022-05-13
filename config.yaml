@@ -40,7 +40,7 @@ dataset:
 
 trainer:
   log_path: train_results/UTNet01  # 로그 저장 경로
-  base_lr: 5.0e-4
+  base_lr: 5.0e-3
   target_iteration: 15000
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
   per_log_iter: 200  # 해당 iteration마다 로그저장
@@ -68,7 +68,7 @@ trainer:
     ExpTargetIterScheduler:  # original TransUnet Scheduler, utils.py에 구현
       gamma: 0.9
       min_lr: 1.0e-7
-      target_iteration: 20000  # lr이 0되는 지점
+      target_iteration: 15000  # lr이 0되는 지점
     StepLR:
       step_size: 500
       gamma: 0.9
