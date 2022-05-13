@@ -25,4 +25,7 @@ jupyter lab
 
 ## Train
 1. ```config.yaml```에서 hyperparameter 설정
-2. ```python run_trainer.py --config config.yaml --model TransUnet --optimizer SGD --scheduler CosineAnnealingWarmRestarts``` 
+2. ```run_trainer.py``` 실행
+```
+python run_trainer.py --config config.yaml --model TransUnet --optimizer SGD --scheduler CosineAnnealingWarmRestarts
+``` 
