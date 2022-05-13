@@ -16,6 +16,20 @@ model:
   UTNetV2:
     model_name: UTNetV2
     pretrained_weights: 
+    in_chan: 1
+    base_chan: 32
+    conv_block: 'BasicBlock'
+    conv_num: [2,1,0,0,  0,1,2,2]
+    trans_num: [0,1,2,2,  2,1,0,0]
+    num_heads: [1,4,8,16, 8,4,1,1]
+    map_size: 2
+    expansion: 1
+    fusion_depth: 2
+    fusion_dim: 512
+    fusion_heads: 16
+    proj_type: 'depthwise'
+    attn_drop: 0.
+    proj_drop: 0.
 
 dataset:
   trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220511/trainset

@@ -33,9 +33,9 @@ def load_TransUnet(model_name, vit_name, vit_patches_size, n_skip, pretrained_we
     return model
 
 
-def load_UTNetV2(model_name, class_list, pretrained_weights, **kwargs):
+def load_UTNetV2(model_name, class_list, pretrained_weights, in_chan, **kwargs):
     from UTNetV2.utnetv2 import UTNetV2
-    model = UTNetV2(3, len(class_list)+1)
+    model = UTNetV2(in_chan, len(class_list)+1, **kwargs)
     pytorch_total_params = sum(p.numel() for p in model.parameters())
     if pretrained_weights:
         model.load_state_dict(load(pretrained_weights))
