@@ -142,7 +142,9 @@ class DsetBrain(Dataset):
         idx_list = set(chain(*[self.class_idx_list[key] for key in self.class_idx_list if key!=0]))
         for idx in tqdm(idx_list, desc=f'Calc {metric}'):
             img, truth_mask, org_img = self[idx]
-            pred_softmax = multi_prediction(model, img, org_img, single=single) >= threshold
+            pred_softmax = multi_prediction(model, img, org_img, single=single)
+            values, pred_mask = torch.max(pred_softmax, dim=0)
+            pred_mask[values<threshold] = 0
             
             score_list, score_mean = metric_function(truth_mask, pred_softmax, self.class_list, self.pixel_limit)
             for key in score_list:
