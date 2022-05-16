@@ -22,12 +22,11 @@ class SegmentationTrainer:
         self.scheduler_name = scheduler_name
         self.test_mode = test_mode
 
+        # Load model
+        self.model = load_models(config['model'][self.model_name], **config['general']).cuda()
         if not self.test_mode:
             # Start logging
             self.init_logging(self.config['trainer']['log_path'])
-
-        # Load model
-        self.model = load_models(config['model'][self.model_name], **config['general']).cuda()
         
         # Load Dataset
         self.train_mask_list = sorted(glob(join(config['dataset']['trainset_path'], '**/img_mask/*.??g'), recursive=True))
@@ -52,9 +51,9 @@ class SegmentationTrainer:
         self.valid_loss_list = {}
         
     def __str__(self):
-        #pytorch_total_params = sum(p.numel() for p in self.model.parameters())
+        pytorch_total_params = sum(p.numel() for p in self.model.parameters())
         string = f"model: {self.model_name}, optimizer: {self.optimizer_name}, scheduler: {self.scheduler_name}"
-        #string += f'\nTotal Parameters of {self.model_name} : {pytorch_total_params:,}'
+        string += f'\nTotal Parameters of {self.model_name} : {pytorch_total_params:,}'
         return string+'\n'+pformat(self.config)
 
     def init_logging(self, log_path):
