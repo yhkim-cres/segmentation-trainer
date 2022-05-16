@@ -146,7 +146,7 @@ class DsetBrain(Dataset):
             values, pred_mask = torch.max(pred_softmax, dim=0)
             pred_mask[values<threshold] = 0
             
-            score_list, score_mean = metric_function(truth_mask, pred_softmax, self.class_list, self.pixel_limit)
+            score_list, score_mean = metric_function(truth_mask, pred_mask, self.class_list, self.pixel_limit)
             for key in score_list:
                 if score_list[key]!=-1: class_score_dict[key].append(score_list[key])
             if score_mean!=-1: class_score_dict['mean'].append(score_mean)
