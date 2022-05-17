@@ -2,22 +2,33 @@ import imgaug.augmenters as iaa
 from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 
 class ImgAug:
-    def __init__(self):
-        # sequential apply & random order
-        self.aug = iaa.SomeOf((0, 8), [
-            iaa.Fliplr(1),
-            iaa.GammaContrast((0.7, 1.7)),
-            iaa.Add((-30, 30)),
-            iaa.Multiply((0.7, 1.2)),
-            iaa.Sharpen(alpha=(0.0, 0.4)),
-            iaa.Rotate((-20, 20)),
-            iaa.AdditiveGaussianNoise(scale=(0, 0.05*255)),
-            iaa.GaussianBlur(sigma=(0, 2.0)),
-            iaa.Affine(scale=(0.8, 1.2)),
-            iaa.Affine(translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}),
-            iaa.ScaleX((0.8, 1.2)),
-            iaa.ScaleY((0.8, 1.2))
-        ], random_order=True)
+    def __init__(self, is_dcm=False):
+        if is_dcm:
+            # sequential apply & random order
+            self.aug = iaa.SomeOf((0, 6), [
+                iaa.Fliplr(1),
+                iaa.Rotate((-20, 20)),
+                iaa.Affine(scale=(0.8, 1.2)),
+                iaa.Affine(translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}),
+                iaa.ScaleX((0.8, 1.2)),
+                iaa.ScaleY((0.8, 1.2))
+            ], random_order=True)
+        else:
+            # sequential apply & random order
+            self.aug = iaa.SomeOf((0, 8), [
+                iaa.Fliplr(1),
+                iaa.GammaContrast((0.7, 1.7)),
+                iaa.Add((-30, 30)),
+                iaa.Multiply((0.7, 1.2)),
+                iaa.Sharpen(alpha=(0.0, 0.4)),
+                iaa.Rotate((-20, 20)),
+                iaa.AdditiveGaussianNoise(scale=(0, 0.05*255)),
+                iaa.GaussianBlur(sigma=(0, 2.0)),
+                iaa.Affine(scale=(0.8, 1.2)),
+                iaa.Affine(translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}),
+                iaa.ScaleX((0.8, 1.2)),
+                iaa.ScaleY((0.8, 1.2))
+            ], random_order=True)
 
     def apply_aug(self, img, mask):
         """

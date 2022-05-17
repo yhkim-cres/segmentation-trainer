@@ -33,20 +33,20 @@ model:
 
 dataset:
   # 아래 데이터셋 경로 필수설정
-  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/trainset
-  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/validset
+  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220516_add_extra/dataset/trainset
+  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220516_add_extra/dataset/validset
   pixel_limit: 80  # 출혈 넓이가 이 값을 넘어야 레이블링됨
   bg_train_ratio: 0.5  # 학습시 non_CH 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
-  oversampling_values: {2: 1}  # 오버샘플링시 사용
+  oversampling_values: {2: 2}  # 오버샘플링시 사용
 
 trainer:
-  log_path: train_results/dset4_transunet_01  # 로그 저장 경로
-  base_lr: 5.0e-3  # 학습시작 learning rate
+  log_path: train_results/dset4_extra_transunet_06_20k_batch4_adamw  # 로그 저장 경로
+  base_lr: 1.0e-4  # 학습시작 learning rate
   target_iteration: 15000  # 학습 종료 이터레이션
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
   per_log_iter: 200  # 해당 iteration마다 로그저장
   
-  train_batch_size: 6  # trainset 배치사이즈
+  train_batch_size: 4  # trainset 배치사이즈
   valid_batch_size: 12  # validset 배치사이즈, gradient 저장이 필요없기때문에 최대 train 배치사이즈의 2배정도로 설정
   train_sample_idx: 710  # trainset prediction 샘플 번호
   valid_sample_idx: 38 # validset prediction 샘플 번호
@@ -58,12 +58,12 @@ trainer:
       momentum: 0.9
       weight_decay: 0.0001
     AdamW:
-      weight_decay: 0.01
+      weight_decay: 0.1
 
   scheduler:
     NoneScheduler: {}  # lr update 진행 X
     CosineAnnealingWarmRestarts:
-      T_0: 150
+      T_0: 200
       T_mult: 1
       eta_min: 0
       last_epoch: -1

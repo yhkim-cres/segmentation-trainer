@@ -82,6 +82,7 @@ class DiceLoss(nn.Module):
 
 def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shape, class_list, label_names, dtype: str='',
                             show=False, save_path: str=None, single=True, threshold=0.5, **kwargs):
+    # dcm 파일 처리 기능필요
     retrain_flag = False
     is_dataset = False
     if isinstance(data, Dataset):
@@ -101,7 +102,7 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
     pred_softmax = multi_prediction(model, img, org_img, single=single)
     # pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
     # pred_softmax = torch.nn.functional.softmax(pred, dim=0).cpu()
-    img = img.permute(1, 2, 0).numpy()
+    img = org_img.numpy()
     values, pred_mask = torch.max(pred_softmax, dim=0)
     pred_mask[values<threshold] = 0
     pred_mask = pred_mask.numpy().astype(np.uint8)
@@ -188,6 +189,17 @@ def pad_to_square(img):
     pad_img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0, 255])
     
     return pad_img
+    
+def window_image(image, window_center, window_width):
+    img_min = window_center - window_width // 2
+    img_max = window_center + window_width // 2
+    window_img = image.copy()
+    window_img[window_img < img_min] = img_min
+    window_img[window_img > img_max] = img_max
+    window_img -= np.min(window_img)
+    window_img = window_img/np.max(window_img)*255.0
+
+    return window_img.astype(np.uint8)
 
 def multi_prediction(model, img, org_img, single=True):
     pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
