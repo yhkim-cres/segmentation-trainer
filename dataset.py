@@ -318,7 +318,7 @@ class DsetDcm(Dataset):
         if self.is_train:
             hu_image, label_mask = self.img_aug.apply_aug(hu_image, label_mask)
 
-        return torch.FloatTensor(hu_image).unsqueeze(0), torch.LongTensor(label_mask), torch.FloatTensor(img/255.0)
+        return torch.FloatTensor(hu_image.copy()).unsqueeze(0), torch.LongTensor(label_mask), torch.FloatTensor(img/255.0)
     
     def train(self):
         self.is_train = True
