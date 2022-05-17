@@ -197,7 +197,10 @@ def window_image(image, window_center, window_width):
     window_img[window_img < img_min] = img_min
     window_img[window_img > img_max] = img_max
     window_img -= np.min(window_img)
-    window_img = window_img/np.max(window_img)*255.0
+    max_value = np.max(window_img)
+    if max_value!=0.:
+        window_img /= max_value
+    window_img *= 255.0
 
     return window_img.astype(np.uint8)
 
