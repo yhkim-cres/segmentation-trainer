@@ -7,7 +7,7 @@ from tqdm import tqdm
 from itertools import chain
 from torch.utils.data import Dataset
 from image_augmentation import ImgAug
-from utils import multi_prediction, calc_dice, calc_iou
+from utils import multi_prediction, calc_dice, calc_iou, oversample
 class DsetBrain(Dataset):
     def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, bg_train_ratio, 
                 is_train=False, **kwargs):
@@ -47,17 +47,22 @@ class DsetBrain(Dataset):
                 self.class_idx_list[0].append(i)
 
         self.org_idx_list = [i for i in range(len(self.mask_list))]  # original idx list
-        
-        if self.is_train:
-            for key in self.oversampling_values:
-                self.class_idx_list[key] = self.class_idx_list[key]*self.oversampling_values[key]
         self.train_idx_list = []  # oversampled idx list
         self.roll()
         
-    def roll(self):  # roll background index
+    def roll(self):  # roll training list
         self.train_idx_list = []  # oversampled idx list
-        not_bg_list = list(chain(*[values for key, values in self.class_idx_list.items() if key!=0]))
+        # ch list oversampling
+        not_bg_list = []
+        for key, values in self.class_idx_list.items():
+            if key==0: continue
+            if self.is_train and key in self.oversampling_values:
+                not_bg_list += oversample(values, self.oversampling_values[key])
+            else:
+                not_bg_list += values
         self.train_idx_list += not_bg_list
+
+        # non_ch sampling
         self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.bg_train_ratio)))
 
     def __len__(self):
@@ -255,10 +260,6 @@ class DsetDcm(Dataset):
                 self.class_idx_list[0].append(i)
 
         self.org_idx_list = [i for i in range(len(self.mask_list))]  # original idx list
-        
-        if self.is_train:
-            for key in self.oversampling_values:
-                self.class_idx_list[key] = self.class_idx_list[key]*self.oversampling_values[key]
         self.train_idx_list = []  # oversampled idx list
         self.roll()
 
@@ -273,10 +274,19 @@ class DsetDcm(Dataset):
 
         return window_image(hu_image, window_center, window_width)
         
-    def roll(self):  # roll background index
+    def roll(self):  # roll training list
         self.train_idx_list = []  # oversampled idx list
-        not_bg_list = list(chain(*[values for key, values in self.class_idx_list.items() if key!=0]))
+        # ch list oversampling
+        not_bg_list = []
+        for key, values in self.class_idx_list.items():
+            if key==0: continue
+            if self.is_train and key in self.oversampling_values:
+                not_bg_list += oversample(values, self.oversampling_values[key])
+            else:
+                not_bg_list += values
         self.train_idx_list += not_bg_list
+
+        # non_ch sampling
         self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.bg_train_ratio)))
 
     def __len__(self):
@@ -300,8 +310,14 @@ class DsetDcm(Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
         # Standardization
+        hu_image[hu_image<-100] = -100
+        hu_image[hu_image>100] = 100
         hu_mean, hu_std = np.mean(hu_image), np.std(hu_image)
-        hu_image = (hu_image-hu_mean)/hu_std
+        if hu_std != 0.:
+            hu_image = (hu_image-hu_mean)/hu_std
+        # hu_max, hu_min = np.max(hu_image), np.min(hu_image)
+        # if (hu_max-hu_min)
+        # hu_image = 2*((hu_image-hu_min)/(hu_max-hu_min))-1
         
         # Read Mask
         mask = cv2.imread(self.mask_list[idx], 0)

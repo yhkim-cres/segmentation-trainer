@@ -263,3 +263,9 @@ def calc_dice(truth_mask, pred_mask, class_list, pixel_limit, smooth=1e-5):
     dice_values = [x for x in dice_list.values() if x!=-1]
     
     return dice_list, np.mean(dice_values).item() if dice_values else -1
+
+def oversample(lst: list, value: float):
+    remain = value-int(value)
+    oversampled_lst = lst*int(value) + sample(lst, round(len(lst)*remain))
+    
+    return oversampled_lst
