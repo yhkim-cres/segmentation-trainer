@@ -309,15 +309,15 @@ class DsetDcm(Dataset):
         img = window_image(hu_image, self.window_center, self.window_width)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
-        # Standardization
+        # Standardization or Normalization
         hu_image[hu_image<-100] = -100
         hu_image[hu_image>100] = 100
-        hu_mean, hu_std = np.mean(hu_image), np.std(hu_image)
-        if hu_std != 0.:
-            hu_image = (hu_image-hu_mean)/hu_std
-        # hu_max, hu_min = np.max(hu_image), np.min(hu_image)
-        # if (hu_max-hu_min)
-        # hu_image = 2*((hu_image-hu_min)/(hu_max-hu_min))-1
+        # hu_mean, hu_std = np.mean(hu_image), np.std(hu_image)
+        # if hu_std != 0.:
+        #     hu_image = (hu_image-hu_mean)/hu_std
+        hu_max, hu_min = np.max(hu_image), np.min(hu_image)
+        if (hu_max-hu_min) != 0:
+            hu_image = (hu_image-hu_min)/(hu_max-hu_min)
         
         # Read Mask
         mask = cv2.imread(self.mask_list[idx], 0)

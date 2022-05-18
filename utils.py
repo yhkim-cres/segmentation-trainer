@@ -266,6 +266,6 @@ def calc_dice(truth_mask, pred_mask, class_list, pixel_limit, smooth=1e-5):
 
 def oversample(lst: list, value: float):
     remain = value-int(value)
-    oversampled_lst = lst*int(value) + sample(lst, round(len(lst)*remain))
+    oversampled_lst = lst*int(value) + random.sample(lst, round(len(lst)*remain))
     
     return oversampled_lst
