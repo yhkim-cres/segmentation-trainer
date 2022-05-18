@@ -37,7 +37,7 @@ dataset:
   validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/validset
   pixel_limit: 80  # 출혈 넓이가 이 값을 넘어야 레이블링됨
   bg_train_ratio: 0.5  # 학습시 non_CH 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
-  oversampling_values: {2: 1}  # 오버샘플링시 사용 {클래스 번호: 
+  oversampling_values: {2: 1}  # 오버샘플링시 사용 {클래스 번호: 비
 
 trainer:
   log_path: train_results/dset4_transunet_01  # 로그 저장 경로
