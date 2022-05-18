@@ -5,7 +5,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", help='config yaml path', default='config.yaml')
 parser.add_argument("-m", "--model", help='model name', default='TransUnet')
-parser.add_argument("-o", "--optimizer", help='optimizer name', default='AdamW')
+parser.add_argument("-o", "--optimizer", help='optimizer name', default='SGD')
 parser.add_argument("-s", "--scheduler", help='scheduler_name', default='ExpTargetIterScheduler')
 args = parser.parse_args()
 
