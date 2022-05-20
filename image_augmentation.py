@@ -2,8 +2,9 @@ import imgaug.augmenters as iaa
 from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 
 class ImgAug:
-    def __init__(self, is_dcm=False):
-        if is_dcm:
+    def __init__(self, only_affine=False):
+        self.only_affine = only_affine
+        if self.only_affine:
             # sequential apply & random order
             self.aug = iaa.SomeOf((0, 6), [
                 iaa.Fliplr(1),

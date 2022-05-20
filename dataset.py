@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from image_augmentation import ImgAug
 from utils import multi_prediction, calc_dice, calc_iou, oversample
 class DsetBrain(Dataset):
-    def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, bg_train_ratio, 
+    def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, non_label_ratio, 
                 is_train=False, **kwargs):
         """
         0 : Background
@@ -27,7 +27,7 @@ class DsetBrain(Dataset):
         self.class_list = class_list
         self.img_shape = tuple(img_shape)
         self.pixel_limit = pixel_limit
-        self.bg_train_ratio = bg_train_ratio
+        self.non_label_ratio = non_label_ratio
         self.oversampling_values = oversampling_values
         
         self.class_idx_list.setdefault(0, [])
@@ -63,7 +63,7 @@ class DsetBrain(Dataset):
         self.train_idx_list += not_bg_list
 
         # non_ch sampling
-        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.bg_train_ratio)))
+        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.non_label_ratio)))
 
     def __len__(self):
         return len(self.train_idx_list) if self.is_train else len(self.org_idx_list)
@@ -220,7 +220,7 @@ class DsetBrain(Dataset):
 import pydicom
 from utils import window_image
 class DsetDcm(Dataset):
-    def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, bg_train_ratio,
+    def __init__(self, mask_list, class_list, img_shape, pixel_limit, oversampling_values, non_label_ratio,
                 window_center=50, window_width=100, is_train=False, **kwargs):
         """
         0 : Background
@@ -231,14 +231,14 @@ class DsetDcm(Dataset):
         """
         self.mask_list = mask_list  # mask image path
         self.dcm_list = [x.replace('/img_mask/', '/dcm/').replace('.png', '.dcm') for x in mask_list]  # image path
-        self.img_aug = ImgAug(is_dcm=True)  # image augmentation instance
+        self.img_aug = ImgAug(only_affine=False)  # image augmentation instance
         self.is_train = is_train  # if is_train : augmentation & oversampling
         self.class_idx_list = {}  # idx_list for each classes
 
         self.class_list = class_list
         self.img_shape = tuple(img_shape)
         self.pixel_limit = pixel_limit
-        self.bg_train_ratio = bg_train_ratio
+        self.non_label_ratio = non_label_ratio
         self.oversampling_values = oversampling_values
         self.window_center = window_center
         self.window_width = window_width
@@ -287,7 +287,7 @@ class DsetDcm(Dataset):
         self.train_idx_list += not_bg_list
 
         # non_ch sampling
-        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.bg_train_ratio)))
+        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.non_label_ratio)))
 
     def __len__(self):
         return len(self.train_idx_list) if self.is_train else len(self.org_idx_list)
@@ -306,18 +306,8 @@ class DsetDcm(Dataset):
             hu_image = cv2.resize(hu_image, dsize=self.img_shape, interpolation=cv2.INTER_CUBIC)
 
         # Get window image
-        img = window_image(hu_image, self.window_center, self.window_width)
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-
-        # Standardization or Normalization
-        hu_image[hu_image<-100] = -100
-        hu_image[hu_image>100] = 100
-        # hu_mean, hu_std = np.mean(hu_image), np.std(hu_image)
-        # if hu_std != 0.:
-        #     hu_image = (hu_image-hu_mean)/hu_std
-        hu_max, hu_min = np.max(hu_image), np.min(hu_image)
-        if (hu_max-hu_min) != 0:
-            hu_image = (hu_image-hu_min)/(hu_max-hu_min)
+        hu_image = window_image(hu_image, self.window_center, self.window_width)
+        rgb_img = cv2.cvtColor(hu_image, cv2.COLOR_GRAY2RGB)
         
         # Read Mask
         mask = cv2.imread(self.mask_list[idx], 0)
@@ -334,7 +324,7 @@ class DsetDcm(Dataset):
         if self.is_train:
             hu_image, label_mask = self.img_aug.apply_aug(hu_image, label_mask)
 
-        return torch.FloatTensor(hu_image.copy()).unsqueeze(0), torch.LongTensor(label_mask), torch.FloatTensor(img/255.0)
+        return torch.FloatTensor(hu_image/255.0).unsqueeze(0), torch.LongTensor(label_mask), torch.FloatTensor(rgb_img/255.0)
     
     def train(self):
         self.is_train = True

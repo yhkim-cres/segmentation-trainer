@@ -16,7 +16,7 @@ model:
   UTNetV2:
     model_name: UTNetV2
     pretrained_weights: 
-    in_chan: 3
+    in_chan: 1
     base_chan: 32
     conv_block: 'BasicBlock'
     conv_num: [2,1,0,0,  0,1,2,2]
@@ -33,16 +33,16 @@ model:
 
 dataset:
   # 아래 데이터셋 경로 필수설정
-  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-2_220518_add_extra_dcm/dataset/trainset
-  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-2_220518_add_extra_dcm/dataset/validset
-  pixel_limit: 80  # 출혈 넓이가 이 값을 넘어야 레이블링됨
-  bg_train_ratio: 0.5  # 학습시 non_CH 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
-  oversampling_values: {2: 1.6}  # 오버샘플링시 사용
+  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/trainset
+  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/validset
+  pixel_limit: 50  # 출혈 넓이가 이 값을 넘어야 레이블링됨
+  non_label_ratio: 0.2  # 학습시 non_label 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
+  oversampling_values: {2: 2}  # 오버샘플링시 사용
 
 trainer:
-  log_path: train_results/dset4-2_transunet_01_baseline  # 로그 저장 경로
-  base_lr: 5.0e-3  # 학습시작 learning rate
-  target_iteration: 15000  # 학습 종료 이터레이션
+  log_path: train_results/dset4-2_transunet_07_same05_add_aug  # 로그 저장 경로
+  base_lr: 5.0e-5  # 학습시작 learning rate
+  target_iteration: 30000  # 학습 종료 이터레이션
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
   per_log_iter: 200  # 해당 iteration마다 로그저장
   
@@ -70,7 +70,7 @@ trainer:
     ExpTargetIterScheduler:  # original TransUnet Scheduler, utils.py에 구현
       gamma: 0.9
       min_lr: 1.0e-7
-      target_iteration: 15000  # lr이 0되는 지점
+      target_iteration: 30000  # lr이 0되는 지점
     StepLR:
       step_size: 500
       gamma: 0.9
