@@ -82,7 +82,6 @@ class DiceLoss(nn.Module):
 
 def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shape, class_list, label_names, dtype: str='',
                             show=False, save_path: str=None, single=True, threshold=0.5, **kwargs):
-    # dcm 파일 처리 기능필요
     retrain_flag = False
     is_dataset = False
     if isinstance(data, Dataset):

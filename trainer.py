@@ -126,6 +126,7 @@ class SegmentationTrainer:
         return loss.item()
 
     def validation_step(self):
+        self.validset.roll()
         loss_list = []
         with torch.no_grad():
             self.model.eval()

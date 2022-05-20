@@ -46,7 +46,7 @@ class DsetBrain(Dataset):
             if is_bg:
                 self.class_idx_list[0].append(i)
 
-        self.org_idx_list = [i for i in range(len(self.mask_list))]  # original idx list
+        self.org_idx_list = []  # original idx list
         self.train_idx_list = []  # oversampled idx list
         self.roll()
         
@@ -252,6 +252,7 @@ class DsetDcm(Dataset):
             mask = cv2.imread(self.mask_list[i], 0)
             is_bg = True
             for cls_idx in self.class_list:
+                if cls_idx==0: continue
                 pixel_num = np.sum(mask==cls_idx).item()
                 if pixel_num>self.pixel_limit:
                     self.class_idx_list[cls_idx].append(i)
@@ -259,7 +260,7 @@ class DsetDcm(Dataset):
             if is_bg:
                 self.class_idx_list[0].append(i)
 
-        self.org_idx_list = [i for i in range(len(self.mask_list))]  # original idx list
+        self.org_idx_list = []  # original idx list
         self.train_idx_list = []  # oversampled idx list
         self.roll()
 
@@ -276,18 +277,23 @@ class DsetDcm(Dataset):
         
     def roll(self):  # roll training list
         self.train_idx_list = []  # oversampled idx list
-        # ch list oversampling
-        not_bg_list = []
+        self.org_idx_list = []
+
+        # label list oversampling
+        label_list = []
         for key, values in self.class_idx_list.items():
             if key==0: continue
             if self.is_train and key in self.oversampling_values:
-                not_bg_list += oversample(values, self.oversampling_values[key])
+                label_list += oversample(values, self.oversampling_values[key])
             else:
-                not_bg_list += values
-        self.train_idx_list += not_bg_list
+                label_list += values
+        
+        non_label_train_list = random.sample(self.class_idx_list[0], min(len(self.class_idx_list[0]), round(len(label_list)*self.non_label_ratio)))
+        non_label_org_idx_list = random.sample(self.class_idx_list[0], min(len(self.class_idx_list[0]), round(len(set(label_list))*self.non_label_ratio)))
 
-        # non_ch sampling
-        self.train_idx_list += random.sample(self.class_idx_list[0], min(len(not_bg_list), round(len(self.class_idx_list[0])*self.non_label_ratio)))
+        # non_label sampling
+        self.org_idx_list = list(set(label_list)) + list(set(non_label_org_idx_list))
+        self.train_idx_list = label_list + non_label_train_list
 
     def __len__(self):
         return len(self.train_idx_list) if self.is_train else len(self.org_idx_list)
@@ -317,6 +323,7 @@ class DsetDcm(Dataset):
         # Create label mask
         label_mask = np.zeros(mask.shape, dtype=np.uint8)
         for cls_idx in self.class_list:
+            if cls_idx==0: continue
             if idx in self.class_idx_list[cls_idx]:
                 label_mask[mask==cls_idx] = cls_idx
 
@@ -377,7 +384,8 @@ class DsetDcm(Dataset):
         for cls_idx in self.class_list:
             class_score_dict.setdefault(cls_idx, [])
         
-        idx_list = set(chain(*[self.class_idx_list[key] for key in self.class_idx_list if key!=0]))
+        # idx_list = set(chain(*[self.class_idx_list[key] for key in self.class_idx_list if key!=0]))
+        idx_list = set(self.org_idx_list)
         for idx in tqdm(idx_list, desc=f'Calc {metric}'):
             img, truth_mask, org_img = self[idx]
             pred_softmax = multi_prediction(model, img, org_img, single=single)
