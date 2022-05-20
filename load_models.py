@@ -19,7 +19,7 @@ def load_TransUnet(model_name, vit_name, vit_patches_size, n_skip, pretrained_we
     img_size = img_shape[0]
     vit_patches_size = vit_patches_size
     config_vit = CONFIGS_ViT_seg[vit_name]
-    config_vit.n_classes = len(class_list)+1
+    config_vit.n_classes = len(class_list)
     config_vit.n_skip = n_skip
 
     if vit_name.find('R50') != -1:
@@ -33,7 +33,7 @@ def load_TransUnet(model_name, vit_name, vit_patches_size, n_skip, pretrained_we
 
 def load_UTNetV2(model_name, class_list, pretrained_weights, in_chan, **kwargs):
     from UTNetV2.utnetv2 import UTNetV2
-    model = UTNetV2(in_chan, len(class_list)+1, **kwargs)
+    model = UTNetV2(in_chan, len(class_list), **kwargs)
     if pretrained_weights:
         model.load_state_dict(load(pretrained_weights))
 

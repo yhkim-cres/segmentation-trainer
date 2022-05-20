@@ -153,9 +153,9 @@ class SegmentationTrainer:
         str_train_score = None
         if calc_trainset_metric:
             train_score = self.trainset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
-            str_train_score = str({key: round(train_score[key], 2) for key in train_score})
+            str_train_score = str({key: round(train_score[key], 3) for key in train_score})
         valid_score = self.validset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
-        str_valid_score = str({key: round(valid_score[key], 2) for key in valid_score})
+        str_valid_score = str({key: round(valid_score[key], 3) for key in valid_score})
         if not str_train_score: str_train_score = str({key: -1 for key in valid_score})
 
         return str_train_score, str_valid_score

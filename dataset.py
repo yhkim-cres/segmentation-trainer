@@ -292,7 +292,7 @@ class DsetDcm(Dataset):
         non_label_org_idx_list = random.sample(self.class_idx_list[0], min(len(self.class_idx_list[0]), round(len(set(label_list))*self.non_label_ratio)))
 
         # non_label sampling
-        self.org_idx_list = list(set(label_list)) + list(set(non_label_org_idx_list))
+        self.org_idx_list = list(set(label_list + non_label_org_idx_list))
         self.train_idx_list = label_list + non_label_train_list
 
     def __len__(self):
@@ -385,8 +385,8 @@ class DsetDcm(Dataset):
             class_score_dict.setdefault(cls_idx, [])
         
         # idx_list = set(chain(*[self.class_idx_list[key] for key in self.class_idx_list if key!=0]))
-        idx_list = set(self.org_idx_list)
-        for idx in tqdm(idx_list, desc=f'Calc {metric}'):
+        idx_num = len(self.org_idx_list)
+        for idx in tqdm(range(idx_num), desc=f'Calc {metric}'):
             img, truth_mask, org_img = self[idx]
             pred_softmax = multi_prediction(model, img, org_img, single=single)
             values, pred_mask = torch.max(pred_softmax, dim=0)

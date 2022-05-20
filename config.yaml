@@ -41,10 +41,10 @@ dataset:
 
 trainer:
   log_path: train_results/dset4-3_transunet_01  # 로그 저장 경로
-  base_lr: 5.0e-5  # 학습시작 learning rate
+  base_lr: 7.5e-5  # 학습시작 learning rate
   target_iteration: 30000  # 학습 종료 이터레이션
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
-  per_log_iter: 200  # 해당 iteration마다 로그저장
+  per_log_iter: 250  # 해당 iteration마다 로그저장
   
   train_batch_size: 4  # trainset 배치사이즈
   valid_batch_size: 12  # validset 배치사이즈, gradient 저장이 필요없기때문에 최대 train 배치사이즈의 2배정도로 설정
@@ -63,7 +63,7 @@ trainer:
   scheduler:
     NoneScheduler: {}  # lr update 진행 X
     CosineAnnealingWarmRestarts:
-      T_0: 200
+      T_0: 250
       T_mult: 1
       eta_min: 0
       last_epoch: -1
