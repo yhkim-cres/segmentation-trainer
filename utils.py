@@ -105,11 +105,11 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
     values, pred_mask = torch.max(pred_softmax, dim=0)
     pred_mask[values<threshold] = 0
     pred_mask = pred_mask.numpy().astype(np.uint8)
-    num_classes = len(class_list)+1
+    num_classes = len(class_list)
     vmax = num_classes-1
 
     cols = 3
-    rows = (num_classes+3)//cols if (num_classes+3)%cols==0 else (num_classes+3)//cols+1
+    rows = (num_classes+4)//cols if (num_classes+4)%cols==0 else (num_classes+4)//cols+1
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(cols*5, rows*5))
     
     idx = idx if is_dataset else ''
@@ -144,11 +144,11 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
     
     plot_idx += 1
     # class softmax prediction
-    for i in range(plot_idx, plot_idx+num_classes-1):
-        softmax_plot = ax.ravel()[i].imshow(pred_softmax[i-plot_idx+1], vmin=0, vmax=1)
+    for i in range(plot_idx, plot_idx+num_classes):
+        softmax_plot = ax.ravel()[i].imshow(pred_softmax[i-plot_idx], vmin=0, vmax=1)
         plt.colorbar(softmax_plot, ax=ax.ravel()[i], shrink=SHRINK)
         ax.ravel()[i].set_axis_off()
-        ax.ravel()[i].set_title(f'{dtype}-{idx}-cls{i-plot_idx+1}-prediction')
+        ax.ravel()[i].set_title(f'{dtype}-{idx}-cls{i-plot_idx}-prediction')
     
     while i<cols*rows-1:
         i += 1

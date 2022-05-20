@@ -79,7 +79,7 @@ class SegmentationTrainer:
         return train_loader, valid_loader, test_loader
 
     def load_loss_layer(self):
-        return CrossEntropyLoss(), DiceLoss(len(self.config['general']['class_list'])+1)
+        return CrossEntropyLoss(), DiceLoss(len(self.config['general']['class_list']))
 
     def load_optimizer(self):
         optim_name = self.optimizer_name
