@@ -1,8 +1,8 @@
 # 0: background, 1: ich, 2: ivh, 3: edh,sdh, 4: sah
 general:
   img_shape: [512, 512]  # 이미지 크기
-  class_list: [1, 2]  # 학습할 클래스 리스트 ex) [1, 2] : ich, ivh만 학습
-  cuda_device: '0'  # gpu select : 0 or 1
+  class_list: [0, 1, 2]  # 학습할 클래스 리스트 ex) [0, 1, 2] : ich, ivh만 학습, 0: non_label 데이터
+  cuda_device: '1'  # gpu select : 0 or 1
   label_names: ['0:BG', '1:ICH', '2:IVH', '3:EXTRA', '4:SAH', '5:ISDH']  # imgviz 사용시 표시되는 레이블이름
   threshold: 0.5  # metric 계산시 사용되는 threshold
 
@@ -36,11 +36,11 @@ dataset:
   trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/trainset
   validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/validset
   pixel_limit: 50  # 출혈 넓이가 이 값을 넘어야 레이블링됨
-  non_label_ratio: 0.2  # 학습시 non_label 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
-  oversampling_values: {2: 2}  # 오버샘플링시 사용
+  non_label_ratio: 0.25  # 학습시 non_label 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
+  oversampling_values: {2: 1.8}  # 오버샘플링시 사용
 
 trainer:
-  log_path: train_results/dset4-2_transunet_07_same05_add_aug  # 로그 저장 경로
+  log_path: train_results/dset4-3_transunet_01  # 로그 저장 경로
   base_lr: 5.0e-5  # 학습시작 learning rate
   target_iteration: 30000  # 학습 종료 이터레이션
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
