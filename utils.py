@@ -90,7 +90,7 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
             data.is_train=False
             retrain_flag = True
     if is_dataset:
-        img, truth_mask, org_img = data[idx]
+        img, truth_mask, org_img = data[data.org_idx_list.index(idx)]
     else:
         org_img = pad_to_square(cv2.imread(data, cv2.IMREAD_COLOR))
         if org_img.shape[:2]!=img_shape: org_img = cv2.resize(org_img, dsize=img_shape, interpolation=cv2.INTER_CUBIC)
