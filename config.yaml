@@ -48,8 +48,8 @@ trainer:
   
   train_batch_size: 4  # trainset 배치사이즈
   valid_batch_size: 12  # validset 배치사이즈, gradient 저장이 필요없기때문에 최대 train 배치사이즈의 2배정도로 설정
-  train_sample_idx: 1120  # trainset prediction 샘플 번호
-  valid_sample_idx: 174 # validset prediction 샘플 번호
+  train_sample_idx: 4226  # trainset prediction 샘플 번호, dataset.class_idx_list의 번호
+  valid_sample_idx: 457 # validset prediction 샘플 번호
 
   calc_trainset_metric: False  # trainset metric 계산옵션(trainset은 데이터양때문에 시간소모가 큼)
 
