@@ -1,7 +1,7 @@
 # 0: background, 1: ich, 2: ivh, 3: edh,sdh, 4: sah
 general:
   img_shape: [512, 512]  # 이미지 크기
-  class_list: [1, 2]  # 학습할 클래스 리스트 ex) [1, 2] : ich, ivh만 학습
+  class_list: [0, 1, 2]  # 학습할 클래스 리스트 ex) [0, 1, 2] : ich, ivh만 학습, 0: non_label 데이터
   cuda_device: '1'  # gpu select : 0 or 1
   label_names: ['0:BG', '1:ICH', '2:IVH', '3:EXTRA', '4:SAH', '5:ISDH']  # imgviz 사용시 표시되는 레이블이름
   threshold: 0.5  # metric 계산시 사용되는 threshold
@@ -16,7 +16,7 @@ model:
   UTNetV2:
     model_name: UTNetV2
     pretrained_weights: 
-    in_chan: 3
+    in_chan: 1
     base_chan: 32
     conv_block: 'BasicBlock'
     conv_num: [2,1,0,0,  0,1,2,2]
@@ -33,23 +33,23 @@ model:
 
 dataset:
   # 아래 데이터셋 경로 필수설정
-  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/trainset
-  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4_220513/dataset/validset
-  pixel_limit: 80  # 출혈 넓이가 이 값을 넘어야 레이블링됨
-  bg_train_ratio: 0.5  # 학습시 non_CH 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
-  oversampling_values: {2: 1}  # 오버샘플링시 사용
+  trainset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/trainset
+  validset_path: /home/yhkim/workspace/project-CH-Labeling/labeld_dataset/labeled_dset4-3_220520/dataset/validset
+  pixel_limit: 50  # 출혈 넓이가 이 값을 넘어야 레이블링됨
+  non_label_ratio: 0.25  # 학습시 non_label 이미지 포함비율(에포크마다 비율만큼 랜덤으로 샘플링)
+  oversampling_values: {2: 1.8}  # 오버샘플링시 사용
 
 trainer:
-  log_path: train_results/dset4_transunet_01  # 로그 저장 경로
-  base_lr: 5.0e-3  # 학습시작 learning rate
-  target_iteration: 15000  # 학습 종료 이터레이션
+  log_path: train_results/dset4-3_transunet_01  # 로그 저장 경로
+  base_lr: 7.5e-5  # 학습시작 learning rate
+  target_iteration: 30000  # 학습 종료 이터레이션
   min_chkpoint_iteration: 1000  # 해당 이터레이션 이후 모델 체크포인트 저장
-  per_log_iter: 200  # 해당 iteration마다 로그저장
+  per_log_iter: 250  # 해당 iteration마다 로그저장
   
-  train_batch_size: 6  # trainset 배치사이즈
+  train_batch_size: 4  # trainset 배치사이즈
   valid_batch_size: 12  # validset 배치사이즈, gradient 저장이 필요없기때문에 최대 train 배치사이즈의 2배정도로 설정
-  train_sample_idx: 710  # trainset prediction 샘플 번호
-  valid_sample_idx: 38 # validset prediction 샘플 번호
+  train_sample_idx: 4226  # trainset prediction 샘플 번호, dataset.class_idx_list의 번호
+  valid_sample_idx: 457 # validset prediction 샘플 번호
 
   calc_trainset_metric: False  # trainset metric 계산옵션(trainset은 데이터양때문에 시간소모가 큼)
 
@@ -58,19 +58,19 @@ trainer:
       momentum: 0.9
       weight_decay: 0.0001
     AdamW:
-      weight_decay: 0.01
+      weight_decay: 0.1
 
   scheduler:
     NoneScheduler: {}  # lr update 진행 X
     CosineAnnealingWarmRestarts:
-      T_0: 150
+      T_0: 250
       T_mult: 1
       eta_min: 0
       last_epoch: -1
     ExpTargetIterScheduler:  # original TransUnet Scheduler, utils.py에 구현
       gamma: 0.9
       min_lr: 1.0e-7
-      target_iteration: 15000  # lr이 0되는 지점
+      target_iteration: 30000  # lr이 0되는 지점
     StepLR:
       step_size: 500
       gamma: 0.9
