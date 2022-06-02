@@ -90,7 +90,7 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
             data.is_train=False
             retrain_flag = True
     if is_dataset:
-        img, truth_mask, org_img = data[idx]
+        img, truth_mask, org_img = data[data.org_idx_list.index(idx)]
     else:
         org_img = pad_to_square(cv2.imread(data, cv2.IMREAD_COLOR))
         if org_img.shape[:2]!=img_shape: org_img = cv2.resize(org_img, dsize=img_shape, interpolation=cv2.INTER_CUBIC)
@@ -101,15 +101,15 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
     pred_softmax = multi_prediction(model, img, org_img, single=single)
     # pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
     # pred_softmax = torch.nn.functional.softmax(pred, dim=0).cpu()
-    img = img.permute(1, 2, 0).numpy()
+    img = org_img.numpy()
     values, pred_mask = torch.max(pred_softmax, dim=0)
     pred_mask[values<threshold] = 0
     pred_mask = pred_mask.numpy().astype(np.uint8)
-    num_classes = len(class_list)+1
+    num_classes = len(class_list)
     vmax = num_classes-1
 
     cols = 3
-    rows = (num_classes+3)//cols if (num_classes+3)%cols==0 else (num_classes+3)//cols+1
+    rows = (num_classes+4)//cols if (num_classes+4)%cols==0 else (num_classes+4)//cols+1
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(cols*5, rows*5))
     
     idx = idx if is_dataset else ''
@@ -144,11 +144,11 @@ def plot_dataset_prediction(model, data: Union[str, Dataset], idx: int, img_shap
     
     plot_idx += 1
     # class softmax prediction
-    for i in range(plot_idx, plot_idx+num_classes-1):
-        softmax_plot = ax.ravel()[i].imshow(pred_softmax[i-plot_idx+1], vmin=0, vmax=1)
+    for i in range(plot_idx, plot_idx+num_classes):
+        softmax_plot = ax.ravel()[i].imshow(pred_softmax[i-plot_idx], vmin=0, vmax=1)
         plt.colorbar(softmax_plot, ax=ax.ravel()[i], shrink=SHRINK)
         ax.ravel()[i].set_axis_off()
-        ax.ravel()[i].set_title(f'{dtype}-{idx}-cls{i-plot_idx+1}-prediction')
+        ax.ravel()[i].set_title(f'{dtype}-{idx}-cls{i-plot_idx}-prediction')
     
     while i<cols*rows-1:
         i += 1
@@ -188,6 +188,20 @@ def pad_to_square(img):
     pad_img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0, 255])
     
     return pad_img
+    
+def window_image(image, window_center, window_width):
+    img_min = window_center - window_width // 2
+    img_max = window_center + window_width // 2
+    window_img = image.copy()
+    window_img[window_img < img_min] = img_min
+    window_img[window_img > img_max] = img_max
+    window_img -= np.min(window_img)
+    max_value = np.max(window_img)
+    if max_value!=0.:
+        window_img /= max_value
+    window_img *= 255.0
+
+    return window_img.astype(np.uint8)
 
 def multi_prediction(model, img, org_img, single=True):
     pred = model(img.unsqueeze(0).cuda()).detach().squeeze()
@@ -248,3 +262,9 @@ def calc_dice(truth_mask, pred_mask, class_list, pixel_limit, smooth=1e-5):
     dice_values = [x for x in dice_list.values() if x!=-1]
     
     return dice_list, np.mean(dice_values).item() if dice_values else -1
+
+def oversample(lst: list, value: float):
+    remain = value-int(value)
+    oversampled_lst = lst*int(value) + random.sample(lst, round(len(lst)*remain))
+    
+    return oversampled_lst

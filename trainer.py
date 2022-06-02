@@ -9,10 +9,11 @@ from load_models import load_models
 from glob import glob
 from pprint import pformat
 from os.path import join
-from dataset import DsetBrain
+from dataset import DsetBrain, DsetDcm
 from torch.nn.modules.loss import CrossEntropyLoss
 from utils import DiceLoss, plot_losses, plot_dataset_prediction, ExpTargetIterScheduler, NoneScheduler
 from datetime import datetime
+
 class SegmentationTrainer:
     def __init__(self, model_name, optimizer_name, scheduler_name, config, test_mode=False, **kwargs):
         # Init variables
@@ -32,8 +33,8 @@ class SegmentationTrainer:
         self.train_mask_list = sorted(glob(join(config['dataset']['trainset_path'], '**/img_mask/*.??g'), recursive=True))
         self.valid_mask_list = sorted(glob(join(config['dataset']['validset_path'], '**/img_mask/*.??g'), recursive=True))
         is_train = True if not self.test_mode else False
-        self.trainset = DsetBrain(self.train_mask_list, is_train=is_train, **config['dataset'], **config['general'])
-        self.validset = DsetBrain(self.valid_mask_list, is_train=False, **config['dataset'], **config['general'])
+        self.trainset = DsetDcm(self.train_mask_list, is_train=is_train, **config['dataset'], **config['general'])
+        self.validset = DsetDcm(self.valid_mask_list, is_train=False, **config['dataset'], **config['general'])
 
         # Load dataloader
         self.train_loader, self.valid_loader, self.test_loader = self.load_dataloader(self.trainset, self.validset, None)
@@ -78,7 +79,7 @@ class SegmentationTrainer:
         return train_loader, valid_loader, test_loader
 
     def load_loss_layer(self):
-        return CrossEntropyLoss(), DiceLoss(len(self.config['general']['class_list'])+1)
+        return CrossEntropyLoss(), DiceLoss(len(self.config['general']['class_list']))
 
     def load_optimizer(self):
         optim_name = self.optimizer_name
@@ -125,6 +126,7 @@ class SegmentationTrainer:
         return loss.item()
 
     def validation_step(self):
+        self.validset.roll()
         loss_list = []
         with torch.no_grad():
             self.model.eval()
@@ -151,9 +153,9 @@ class SegmentationTrainer:
         str_train_score = None
         if calc_trainset_metric:
             train_score = self.trainset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
-            str_train_score = str({key: round(train_score[key], 2) for key in train_score})
+            str_train_score = str({key: round(train_score[key], 3) for key in train_score})
         valid_score = self.validset.calc_dataset_metric(self.model, metric=metric, threshold=threshold)
-        str_valid_score = str({key: round(valid_score[key], 2) for key in valid_score})
+        str_valid_score = str({key: round(valid_score[key], 3) for key in valid_score})
         if not str_train_score: str_train_score = str({key: -1 for key in valid_score})
 
         return str_train_score, str_valid_score
